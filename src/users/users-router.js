@@ -1,3 +1,8 @@
+require('dotenv').config();
+
+const crypto = require('crypto');
+
+
 const path = require('path')
 const express = require('express')
 const xss = require('xss')
@@ -10,10 +15,10 @@ const serializeUser = user =>({
     id: user.id,
     username:xss(user.username),
     email: xss(user.email),
-    password:user.password,
     serialid:user.serialid
 })
-
+const nodemailer = require('nodemailer');
+const { user } = require('../config');
 usersRouter.route('/').get((req,res,next)=>{
     const knexInstance = req.app.get('db')
     const username = req.query.username;
@@ -65,6 +70,95 @@ usersRouter.route('/').get((req,res,next)=>{
 catch{res.status(500).send()}    
 })
 
+usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
+    const email =req.body.email;
+    if(!email){
+        return res.status(400).json({
+            error:{message:`email is '${email}' in request body`}
+        })
+    }
+    UsersService.getByEmail(req.app.get('db'),email)
+    .then(async user=>{
+        if(!user){
+            return res.status(404).json({
+                error:{message:`User doesn't exist`}
+            })
+        }
+        const token=crypto.randomBytes(5).toString('hex');
+        try{
+            console.log(user)
+            const salt = await bcrypt.genSalt();
+            const hashedToken = await bcrypt.hash(token,salt);
+            //should not store the code directly, run it through bcrypt
+            const userToUpdate = {resetpasswordtoken:hashedToken}
+            UsersService.updateUser(req.app.get('db'),user.id,userToUpdate)
+            .then(numRowsAffected=>{
+                res.status(204).end()
+            }).catch(next);
+            const transporter = nodemailer.createTransport({
+                service:'gmail',
+                auth:{
+                    user:`${process.env.user}`,
+                    pass:`${process.env.pass}`
+                }
+            });
+
+            const mailOptions={
+                from: `${process.env.user}`,
+                to: user.email,
+                subject: 'Code to reset Password',
+                text:`Here is the Code to reset your password for 'What Should I Make' .\n\n`+
+                `${token}`
+            };
+            transporter.sendMail(mailOptions,(err,resp)=>{
+                if(err) console.error('there was an error',err)
+                else{
+                    console.log('response',resp)
+                    res.status(200).json('recovery mail sent');
+                }
+            })
+            
+            res.json(serializeUser(user))
+            next();
+        }
+        catch{res.status(500).send()}    
+
+    }).catch(next)
+});
+usersRouter.route('/reset-password').get(jsonParser,(req,res,next)=>{
+        const code =req.query.code;
+        const user_id = req.query.user_id;
+        console.log(code,user_id)
+        UsersService.getById(req.app.get('db'),
+            user_id).then(user=>{
+                if(!user){
+                    return res.status(404).json({
+                          error:{message:`User doesn't exist`}
+                    })
+                }
+                if(!bcrypt.compareSync(code, user.resetpasswordtoken)){
+                       return res.status(401).json({
+                            error:{message:`Reset code does not match`}
+                        })
+                }
+                res.status(200).json(serializeUser(user));
+            })
+}).patch(jsonParser,async (req,res,next)=>{
+    try{
+        const user_id=req.body.user_id;
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(req.body.password,salt);
+        console.log(salt, hashedPassword)
+        const updateUser = { password:hashedPassword, resetpasswordtoken:null };
+        console.log(updateUser)
+
+        UsersService.updateUser(req.app.get('db'), user_id,updateUser)
+    .then(numRowsAffected=>{
+        res.status(204).end()
+    }).catch(next)
+    }
+catch{res.status(500).send()}    
+})
 
 usersRouter.route('/:user_id').all((req,res,next)=>{
     UsersService.getById(req.app.get('db'),

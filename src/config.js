@@ -1,6 +1,10 @@
 require('dotenv').config()
 module.exports = {
   PORT: process.env.PORT || 8000,
+  user:process.env.user,
+  pass:process.env.pass,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  DATABASE_URL: process.env.DATABASE_URL ||'postgres://yhzksdvxtvaagw:0359c3f00f14ebe5c73dce97b4ff0e4d5e6c138d87585feda599f2f6f4f0b3ef@ec2-54-160-18-230.compute-1.amazonaws.com:5432/d87ktv3fnv548u'
+  DATABASE_URL: process.env.DATABASE_URL ||'postgres://akjnomghadmqke:95ff7414d603b551503af49d212df1d9e44bf270e8ec84459530b89f1406edda@ec2-54-163-47-62.compute-1.amazonaws.com:5432/dc22p045vlhe00',
+  TEST_DATABASE_URL: process.env.TEST_DATABASE_URL || 'postgresql://dunder_mifflin@localhost/WhatMake'
 }
+

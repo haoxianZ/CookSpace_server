@@ -20,6 +20,13 @@ const UsersService = {
         .where('id', id)
         .first()
     },
+    getByEmail(knex,email){
+      return knex
+      .from('users')
+      .select('*')
+      .where('email', email)
+      .first()
+    },
     getByUsername(knex, username) {
       return knex.from('users').select('*')
       .where('username','like',username)
@@ -33,8 +40,12 @@ const UsersService = {
   
     updateUser(knex, id, newUserFields) {
       return knex('users')
-        .where({ id })
+        .where({id})
         .update(newUserFields)
+        .returning('*')
+        .then(rows => {
+          return rows[0]
+        })
     },
   }
   
