@@ -19,7 +19,30 @@ const serializeUser = user =>({
 })
 const nodemailer = require('nodemailer');
 const { user } = require('../config');
-usersRouter.route('/').get((req,res,next)=>{
+usersRouter.route('/').put(jsonParser,(req,res,next)=>{
+    const username=req.body.username;
+    const password=req.body.password;
+    if(username){
+        UsersService.getByUsername(req.app.get('db'),username)
+    .then(user=>{
+        console.log(user)
+        if(!user){
+            return res.status(401).json({
+                error:{message:'Check you info again, it is case sensitive'}
+            })
+        }
+        if(!bcrypt.compareSync(password,user.password)) {
+            return res.status(401).json({
+                error:{message:'Wrong Password'}
+            })
+        }
+        res.json(serializeUser(user))})
+    .catch(next)
+    }
+    else res.status(404).json({
+        error:{message:`User doesn't exist`}
+    })
+}).get((req,res,next)=>{
     const knexInstance = req.app.get('db')
     const username = req.query.username;
     const email = req.query.email;
