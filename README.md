@@ -23,6 +23,150 @@ Examples:
 
 - [Live Demo](https://what-should-i-make-client.vercel.app/)
 
+## API endpoint
+
+- [Link](https://fast-scrubland-35677.herokuapp.com)
+
+## Schema
+
+### User
+
+```js
+{"id":"2000effb-903f-4a57-9c02-b91ba825b509","username":"testa","email":"test1@test.com","serialid":1}
+```
+
+### Note
+
+```js
+{"id":3,"content":"pork","user_id":1}
+```
+## API Overview
+
+```text
+/
+.
+├── /users
+│   └── GET
+│   └── GET /:id
+│   └── DELETE /:id
+│   └── GET /reset-password
+│   └── PATCH /reset-password
+│   └── PATCH /forget-password
+│   └── POST
+│   └── PUT
+│ 
+├── /notes
+│   └── GET
+│   └── GET /:id    
+│   └── Post
+│   └── Patch /:id
+│   └── Delete /:id
+│    
+```
+### GET `/users/:id` or `/notes/:id`
+
+```js
+// req.params
+{
+  id: ID
+}
+```
+### DELETE `/users/:id` or `/notes/:id`
+
+```js
+// req.params
+{
+  id: ID
+}
+```
+### PUT `/users`
+
+```js
+// req.body
+{
+  password: String,
+  username: String
+}
+
+// res.body
+{
+  id: uuid,
+  email: String,
+  username: String,
+  serialid: integer
+}
+```
+### POST `/users`
+
+```js
+// req.body
+{
+  password: String,
+  username: String
+}
+
+// res.body
+{
+  id: uuid,
+  email: String,
+  username: String,
+  serialid: integer
+}
+```
+### PATCH `/users/forget-password`
+
+```js
+// req.body
+{
+  email: String
+}
+
+// res.body
+{
+  'recovery mail sent'
+}
+```
+### GET `/users/reset-password`
+
+```js
+//req.body
+{
+  user_id: string
+}
+
+```
+### PATCH `/users/reset-password`
+
+```js
+//res.query
+{
+  code: string,
+  user_id, string
+}
+// res.body
+{
+  id: uuid,
+  email: String,
+  username: String,
+  serialid: integer
+}
+```
+### POST `/notes`
+
+```js
+// req.body
+{
+  content: String,
+  user_id: Integer
+}
+
+// res.body
+{
+  id: uuid,
+  content: String,
+  user_id: Integer,
+}
+```
 ## Built With
 
 * HTML

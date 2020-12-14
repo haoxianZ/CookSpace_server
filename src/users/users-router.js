@@ -141,7 +141,7 @@ usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
                 }
             })
             
-            res.json(serializeUser(user))
+            
             next();
         }
         catch{res.status(500).send()}    
