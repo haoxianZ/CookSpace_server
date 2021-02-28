@@ -1,72 +1,26 @@
 
 require('dotenv').config();
-const cron = require('node-cron')
-const fetch = require('node-fetch')
-const recipesService = require('./recipes-service')
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const helmet = require('helmet')
 const { NODE_ENV } = require('./config')
-const recipesRouter = require('./recipes-router')
+const notesRouter = require('./notes-router')
 const app = express()
 const usersRouter = require('./users/users-router')
-var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy;
+
 app.use(helmet())
-app.use(cors());
+app.use(cors())
 app.get('/', (req, res) => {
        res.send('Hello, world!')
      })
 
 
-const morganOption = (NODE_ENV === 'production')? 'tiny': 'common';
-var session = require("express-session"),
-    bodyParser = require("body-parser");
-const { json } = require('body-parser');
-const eventsRouter = require('./events-router');
-
-app.use(express.static("public"));
-app.use(session({ secret: "thinkfulProject" }));
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(new LocalStrategy(
-  function(username, password, done) {
-    User.findOne({ username: username }, function (err, user) {
-      if (err) { return done(err); }
-      if (!user) {
-        return done(null, false, { message: 'Incorrect username.' });
-      }
-      if (!user.validPassword(password)) {
-        return done(null, false, { message: 'Incorrect password.' });
-      }
-      return done(null, user);
-    });
-  }
-));
-app.post('/login', (req, res) =>{
-  passport.authenticate('local', { successRedirect: '/',
-  failureRedirect: '/login'})
-  console.log('running')
-}
-  
-);
-cron.schedule('0 0 * * *', function() {
-  console.log('running a task every minute');
-  const requestOptions = {
-    method: 'GET'
-  };
-  fetch("https://api.spoonacular.com/recipes/random?number=1&apiKey=98357eb101bf42e59128466b70bf6fea", requestOptions)
-  .then(response => response.json())
-  .then(result => {console.log(result) 
-    recipesService.updateRecipeOfTheDay(app.get('db'),1,result)})
-  .catch(error => console.log('error', error));
-});
-app.use('/recipes',recipesRouter)
+const morganOption = (NODE_ENV === 'production')
+  ? 'tiny'
+  : 'common';
+app.use('/notes',notesRouter)
 app.use('/users', usersRouter)
-app.use('/events', eventsRouter )
-
 app.use(morgan(morganOption))
 app.use(function errorHandler(error, req, res, next) {
          let response

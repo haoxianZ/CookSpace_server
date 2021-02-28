@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS recipe_of_the_day;
