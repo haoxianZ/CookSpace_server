@@ -7,7 +7,7 @@ const path = require('path')
 const express = require('express')
 const xss = require('xss')
 const UsersService = require('./users-service')
-const NotesService = require('../notes-service')
+const recipesService = require('../recipes-service')
 const usersRouter = express.Router()
 const jsonParser = express.json()
 const bcrypt = require('bcrypt')
@@ -19,6 +19,43 @@ const serializeUser = user =>({
 })
 const nodemailer = require('nodemailer');
 const { user } = require('../config');
+var passport = require('passport')
+  , LocalStrategy = require('passport-local').Strategy;
+
+  passport.use(new LocalStrategy(
+    function(username, password, done) {
+      User.findOne({ username: username }, function (err, user) {
+        if (err) { return done(err); }
+        if (!user) {
+          return done(null, false, { message: 'Incorrect username.' });
+        }
+        if (!user.validPassword(password)) {
+          return done(null, false, { message: 'Incorrect password.' });
+        }
+        return done(null, user);
+      });
+    }
+  ));
+
+usersRouter.route('/login').post((req, res) =>{
+    console.log('being called')
+
+  passport.authenticate('local', function(req, res) {
+      console.log('log in')
+    const username=req.user.username
+    // If this function gets called, authentication was successful.
+    // `req.user` contains the authenticated user.
+    if(username){
+        UsersService.getByUsername(req.app.get('db'),username)
+        .then(user=>{
+            res.json(serializeUser(user))
+        })
+    }
+  })
+
+}
+  
+);
 usersRouter.route('/').put(jsonParser,(req,res,next)=>{
     const username=req.body.username;
     const password=req.body.password;
@@ -42,32 +79,6 @@ usersRouter.route('/').put(jsonParser,(req,res,next)=>{
     else res.status(404).json({
         error:{message:`User doesn't exist`}
     })
-}).get((req,res,next)=>{
-    const knexInstance = req.app.get('db')
-    const username = req.query.username;
-    const email = req.query.email;
-    const password = req.query.password;
-    if(username){
-        UsersService.getByUsername(knexInstance,username)
-    .then(user=>{
-        console.log(user)
-        if(!user){
-            return res.status(401).json({
-                error:{message:'Check you info again, it is case sensitive'}
-            })
-        }
-        if(!bcrypt.compareSync(password,user.password)) {
-            return res.status(401).json({
-                error:{message:'Wrong Password'}
-            })
-        }
-        res.json(serializeUser(user))})
-    .catch(next)
-    }
-    else {UsersService.getAllUsers(knexInstance)
-    .then(users=>{res.json(users.map(serializeUser))})
-    .catch(next)}
-    
 }).post(jsonParser,async (req,res,next)=>{
     try{
         const salt = await bcrypt.genSalt();
@@ -220,10 +231,97 @@ usersRouter.route('/:user_id').all((req,res,next)=>{
 })
 
 usersRouter.route('/:user_id/notes').get((req,res,next)=>{
-    NotesService.getNoteforUser(req.app.get('db'),req.params.user_id)
+    recipesService.getNoteforUser(req.app.get('db'),req.params.user_id)
     .then(notes=>{
         res.json(notes)
     }).catch(next)
 })
+
+usersRouter.route('/:user_id/friends').get((req,res,next)=>{
+    UsersService.getUserFriends(req.app.get('db'),req.params.user_id)
+    .then(friends=>{
+        res.json(friends)
+    }).catch(next)
+}).post(jsonParser,(req,res,next)=>{
+    const newFriend = {user_id:req.body.user_id, friends:req.body.friend_id};
+    for(const [key,value] of Object.entries(newFriend)){
+    if(value == null){
+        return res.status(400).json({
+            error:{message:`Missing '${key}' in request body`}
+        })
+    };  
+    UsersService.insertUserFriend(req.app.get('db'), newFriend)
+.then(friend=>{
+    res.status(201)
+    .json({friend_id:friend})
+}).catch(next)
+}
+})
+usersRouter.route('/:user_id/friends/:friend_id').delete((req,res,next)=>{
+    const deleteFriend = req.params.friend_id;
+    console.log(deleteFriend)
+    UsersService.deleteUserFriend(req.app.get('db'),deleteFriend)
+    .then(numRowsAffected=>{
+        res.status(204).end()
+    }).catch(next)
+})
+usersRouter.route('/:user_id/bookmarks').get((req,res,next)=>{
+    recipesService.getUserBookmarks(req.app.get('db'),req.params.user_id)
+    .then(bookmarks=>{
+        res.json(bookmarks)
+    }).catch(next)
+}).post(jsonParser,(req,res,next)=>{
+    const newBookmark = {user_id:req.body.user_id, api_recipe:req.body.recipe};
+    for(const [key,value] of Object.entries(newBookmark)){
+    if(value == null){
+        return res.status(400).json({
+            error:{message:`Missing '${key}' in request body`}
+        })
+    };  
+    UsersService.insertIngredients(req.app.get('db'), newBookmark)
+.then(recipe=>{
+    res.status(201)
+    .json({api_recipe:recipe})
+}).catch(next)
+}
+})
+usersRouter.route('/:user_id/bookmarks/bookmark_id').delete((req,res,next)=>{
+    const deleteRecipe = req.params.bookmark_id;
+
+    UsersService.deleteIngredients(req.app.get('db'),deleteRecipe)
+    .then(numRowsAffected=>{
+        res.status(204).end()
+    }).catch(next)
+})
+
+usersRouter.route('/:user_id/ingredients').get((req,res,next)=>{
+    recipesService.getUserIngredients(req.app.get('db'),req.params.user_id)
+    .then(ingredients=>{
+        res.json(ingredients)
+    }).catch(next)
+}).post(jsonParser,(req,res,next)=>{
+    const newIngredient = {user_id:req.body.user_id, ingredient:req.body.ingredient};
+    for(const [key,value] of Object.entries(newIngredient)){
+    if(value == null){
+        return res.status(400).json({
+            error:{message:`Missing '${key}' in request body`}
+        })
+    };  
+    UsersService.insertIngredients(req.app.get('db'), newIngredient)
+.then(ingredient=>{
+    res.status(201)
+    .json({ingredient:ingredient})
+}).catch(next)
+}
+})
+usersRouter.route('/:user_id/ingredients/ingredient_id').delete((req,res,next)=>{
+    const deleteIngredient = req.params.Ingredient_id;
+
+    UsersService.deleteIngredients(req.app.get('db'),deleteIngredient,
+    req.params.user_id).then(numRowsAffected=>{
+        res.status(204).end()
+    }).catch(next)
+})
+
 
 module.exports = usersRouter

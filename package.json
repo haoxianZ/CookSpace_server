@@ -1,5 +1,5 @@
 {
-  "name": "what-should-i-make-server",
+  "name": "group-project-server",
   "version": "1.0.0",
   "description": "",
   "engines": {
@@ -21,14 +21,21 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.0",
+    "body-parser": "^1.19.0",
+    "connect-flash": "^0.1.1",
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
     "helmet": "^4.1.0",
     "knex": "^0.21.5",
     "morgan": "^1.10.0",
+    "node-cron": "^2.0.3",
+    "node-fetch": "^2.6.1",
     "nodemailer": "^6.4.16",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0",
     "pg": "^8.3.3",
     "postgrator-cli": "^3.2.0",
     "xss": "^1.0.8"
