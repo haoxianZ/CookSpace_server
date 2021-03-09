@@ -31,10 +31,15 @@ eventsRouter.route('/').get((req,res,next)=>{
       })
       .catch(next)
 })
+eventsRouter.route('/:userid').get((req,res,next)=>{
+    eventsService.getEventsForHost(req.app.get('db'),req.params.userid)
+    .then(events=>{
+        res.json(events)
+    }).catch(next)
+})
 
 
-
-eventsRouter.route('/:event_id')
+eventsRouter.route('/event/:event_id')
 .all((req,res,next)=>{
     const knexInstance = req.app.get('db')
     eventsService.getById(knexInstance,req.params.event_id)
@@ -48,12 +53,7 @@ eventsRouter.route('/:event_id')
         next()
     }).catch(next)})
     .get((req,res,next)=>{
-        res.json({
-            id:res.event.id,
-            host_id: xss(res.event.host_id),
-            event_recipe_id: res.event.event_recipe_id,
-            event_date:res.event.event_date
-        })
+        res.json(res.event)
     }       
 ).delete((req,res,next)=>{
     eventsService.deleteById(req.app.get('db'),req.params.event_id)

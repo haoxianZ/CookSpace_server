@@ -15,7 +15,10 @@ const serializeUser = user =>({
     id: user.id,
     username:xss(user.username),
     email: xss(user.email),
-    serialid:user.serialid
+    serialid:user.serialid,
+    bio: xss(user.bio),
+    cooking_level: xss(user.cooking_level),
+    profile_pic:xss(user.profile_pic)
 })
 const nodemailer = require('nodemailer');
 const { user } = require('../config');
@@ -84,7 +87,7 @@ usersRouter.route('/').put(jsonParser,(req,res,next)=>{
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(req.body.password,salt);
         console.log(salt, hashedPassword)
-        const newUser = { username:req.body.username, email:req.body.email, password:hashedPassword };
+        let newUser = { username:req.body.username, email:req.body.email, password:hashedPassword };
         console.log(newUser)
         console.log(bcrypt.compareSync(req.body.password, hashedPassword))
         for(const [key,value] of Object.entries(newUser)){
@@ -92,7 +95,11 @@ usersRouter.route('/').put(jsonParser,(req,res,next)=>{
             return res.status(400).json({
                 error:{message:`Missing '${key}' in request body`}
             })
-        };  
+        };
+        newUser = { username:req.body.username, 
+            email:req.body.email, password:hashedPassword, bio:req.body.bio, 
+            cooking_level:req.body.cooking_level, profile_pic:req.body.profile_pic };
+
         UsersService.insertUser(req.app.get('db'), newUser)
     .then(user=>{
         res.status(201)
@@ -216,14 +223,15 @@ usersRouter.route('/:user_id').all((req,res,next)=>{
         res.status(204).end()
     }).catch(next)
 }).patch(jsonParser, (req,res,next)=>{
-    const { username, email} = req.body
-    const userToUpdate = { username, email }
+    const { username, email, cooking_level, bio, profile_pic} = req.body
+    let userToUpdate = { username, email }
     const numberOfValues = Object.values(userToUpdate).filter(Boolean).length
     if(numberOfValues ===0){
         return res.status(400).json({
             error:{message:'Request must contain username or email'}
         })
     }
+    userToUpdate={ username, email, cooking_level, bio, profile_pic}
     UsersService.updateUser(req.app.get('db'),req.params.user_id,userToUpdate)
     .then(numRowsAffected=>{
         res.status(204).end()
@@ -266,24 +274,25 @@ usersRouter.route('/:user_id/friends/:friend_id').delete((req,res,next)=>{
     }).catch(next)
 })
 usersRouter.route('/:user_id/bookmarks').get((req,res,next)=>{
-    recipesService.getUserBookmarks(req.app.get('db'),req.params.user_id)
+    UsersService.getUserBookmarks(req.app.get('db'),req.params.user_id)
     .then(bookmarks=>{
         res.json(bookmarks)
     }).catch(next)
 }).post(jsonParser,(req,res,next)=>{
-    const newBookmark = {user_id:req.body.user_id, api_recipe:req.body.recipe};
+    const newBookmark = {user_id:req.body.user_id, api_recipe:req.body.api_recipe};
     for(const [key,value] of Object.entries(newBookmark)){
     if(value == null){
         return res.status(400).json({
             error:{message:`Missing '${key}' in request body`}
         })
-    };  
-    UsersService.insertIngredients(req.app.get('db'), newBookmark)
+    };}
+    UsersService.insertBookmarks(req.app.get('db'), newBookmark)
 .then(recipe=>{
     res.status(201)
     .json({api_recipe:recipe})
-}).catch(next)
-}
+})
+.catch(next)
+
 })
 usersRouter.route('/:user_id/bookmarks/bookmark_id').delete((req,res,next)=>{
     const deleteRecipe = req.params.bookmark_id;
@@ -295,24 +304,24 @@ usersRouter.route('/:user_id/bookmarks/bookmark_id').delete((req,res,next)=>{
 })
 
 usersRouter.route('/:user_id/ingredients').get((req,res,next)=>{
-    recipesService.getUserIngredients(req.app.get('db'),req.params.user_id)
+    UsersService.getUserIngredients(req.app.get('db'),req.params.user_id)
     .then(ingredients=>{
         res.json(ingredients)
     }).catch(next)
 }).post(jsonParser,(req,res,next)=>{
-    const newIngredient = {user_id:req.body.user_id, ingredient:req.body.ingredient};
+    const newIngredient = {user_id:req.params.user_id, ingredient:req.body.ingredient};
     for(const [key,value] of Object.entries(newIngredient)){
     if(value == null){
         return res.status(400).json({
             error:{message:`Missing '${key}' in request body`}
         })
-    };  
+    };  }
     UsersService.insertIngredients(req.app.get('db'), newIngredient)
 .then(ingredient=>{
     res.status(201)
     .json({ingredient:ingredient})
 }).catch(next)
-}
+
 })
 usersRouter.route('/:user_id/ingredients/ingredient_id').delete((req,res,next)=>{
     const deleteIngredient = req.params.Ingredient_id;

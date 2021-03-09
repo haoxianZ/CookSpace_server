@@ -62,25 +62,25 @@ const UsersService = {
         })
     },
     getUserFriends(knex,id){
-      return knex('friends').select('*').where('friends.user_id',id).distinctOn('friends')
+      return knex('friends').join('users','users.id','=','friends.friends').select('friends','email','username').where('friends.user_id',id).distinctOn('friends')
     },
     getUserBookmarks(knex,user_id){
-      return knex.from('Bookmarks').select('*').where('user_id',user_id)
+      return knex.from('bookmarks').select('*').where('user_id',user_id)
     },
     getABookmark(knex,id){
-      return knex.from('Bookmarks').select('*').where('bookmakr_id',id)
+      return knex.from('bookmarks').select('*').where('bookmakr_id',id)
     },
     insertBookmarks(knex, newRecipe){
-      return knex.insert(newRecipe).into('Bookmarks').returning('*').then(rows => {return rows[0]})
+      return knex.insert(newRecipe).into('bookmarks').returning('*').then(rows => {return rows[0]})
   },
   deleteBookmarks(knex,id){
-      return knex('Bookmarks').where('bookmakr_id',id).delete()
+      return knex('bookmarks').where('bookmakr_id',id).delete()
   },
   updateBookmarks(knex,id, updateBookmarks){
-      return knex('Bookmarks').where('bookmakr_id',id).update(updateBookmarks).returning('*').then(rows => {return rows[0]})
+      return knex('bookmarks').where('bookmakr_id',id).update(updateBookmarks).returning('*').then(rows => {return rows[0]})
   },
     getUserIngredients(knex,id){
-      return knex.from('Bookmarks').select('*').where('user_id',id)
+      return knex.from('ingredients').select('*').where('user_id',id)
     },
     
     insertIngredients(knex, newIngredient){
