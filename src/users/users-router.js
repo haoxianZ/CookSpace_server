@@ -59,7 +59,11 @@ usersRouter.route('/login').post((req, res) =>{
 }
   
 );
-usersRouter.route('/').put(jsonParser,(req,res,next)=>{
+usersRouter.route('/').get(jsonParser,(req,res,next)=>{
+    UsersService.getAllUsers(req.app.get('db')).then(users=>{
+        res.json(users)
+    })
+}).put(jsonParser,(req,res,next)=>{
     const username=req.body.username;
     const password=req.body.password;
     if(username){
@@ -294,10 +298,10 @@ usersRouter.route('/:user_id/bookmarks').get((req,res,next)=>{
 .catch(next)
 
 })
-usersRouter.route('/:user_id/bookmarks/bookmark_id').delete((req,res,next)=>{
+usersRouter.route('/:user_id/bookmarks/:bookmark_id').delete((req,res,next)=>{
     const deleteRecipe = req.params.bookmark_id;
 
-    UsersService.deleteIngredients(req.app.get('db'),deleteRecipe)
+    UsersService.deleteBookmarks(req.app.get('db'),deleteRecipe)
     .then(numRowsAffected=>{
         res.status(204).end()
     }).catch(next)
@@ -323,11 +327,10 @@ usersRouter.route('/:user_id/ingredients').get((req,res,next)=>{
 }).catch(next)
 
 })
-usersRouter.route('/:user_id/ingredients/ingredient_id').delete((req,res,next)=>{
-    const deleteIngredient = req.params.Ingredient_id;
+usersRouter.route('/:user_id/ingredients/:ingredient_id').delete((req,res,next)=>{
+    const deleteIngredient = req.params.ingredient_id;
 
-    UsersService.deleteIngredients(req.app.get('db'),deleteIngredient,
-    req.params.user_id).then(numRowsAffected=>{
+    UsersService.deleteIngredients(req.app.get('db'),deleteIngredient).then(numRowsAffected=>{
         res.status(204).end()
     }).catch(next)
 })
