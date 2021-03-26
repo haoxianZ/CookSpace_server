@@ -22,6 +22,13 @@ const recipesService = {
     },
     updateRecipeOfTheDay(knex,id,newRecipe){
         return knex('recipe_of_the_day').where({id}).update({recipes: JSON.stringify(newRecipe)}).returning('*').then(rows => {return rows[0]})
-    }
+    },
+    getPopularRecipe(knex){
+        return knex.select('*').from('popular_recipes')
+    },
+    insertPopularRecipe(knex, newRecipe){
+        return knex.insert({recipe: JSON.stringify(newRecipe)}).into('popular_recipes').returning('*').then(rows => {return rows[0]})
+    },
+
 }
 module.exports =  recipesService

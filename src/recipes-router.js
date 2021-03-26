@@ -12,8 +12,8 @@ recipesRouter.route('/').get((req,res,next)=>{
         res.json(recipes)
     }).catch(next)
 }).post(jsonParser,(req,res,next)=>{
-    const { content, user_id} = req.body
-    const newRecipe = { content, user_id }
+    const { api_id,comment,liked, user_id} = req.body
+    const newRecipe = { api_id,comment,liked, user_id }
     for (const [key, value] of Object.entries(newRecipe)){
       if (value == null){
         return res.status(400).json({
@@ -39,7 +39,13 @@ recipesRouter.route('/recipeOfTheDay').get((req,res,next)=>{
 
     })
 })
+recipesRouter.route('/popularRecipes').get((req,res,next)=>{
+    recipesService.getPopularRecipe(req.app.get('db')).
+    then(recipes=>{
+        res.status(200).json(recipes)
 
+    })
+})
 const serializeinfo = {
     spoonApi:process.env.spoonAPI
 }

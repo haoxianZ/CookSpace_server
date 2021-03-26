@@ -1,4 +1,4 @@
 ALTER TABLE users
-DROP COLUMN bio,
-DROP cooking_level
+DROP COLUMN if EXISTS bio ,
+DROP COLUMN if EXISTS cooking_level 
 ;

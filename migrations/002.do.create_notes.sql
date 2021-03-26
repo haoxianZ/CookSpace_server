@@ -3,5 +3,5 @@ CREATE TABLE recipes  (
     api_id TEXT,
     comment TEXT,
     Liked INTEGER,
-    user_id INTEGER REFERENCES users(serialid) ON DELETE CASCADE
+    user_id UUid REFERENCES users(id) ON DELETE CASCADE
 );

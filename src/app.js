@@ -60,13 +60,64 @@ cron.schedule('0 0 * * *', function() {
   fetch("https://api.spoonacular.com/recipes/random?number=1&apiKey=98357eb101bf42e59128466b70bf6fea", requestOptions)
   .then(response => response.json())
   .then(result => {console.log(result) 
-    recipesService.updateRecipeOfTheDay(app.get('db'),1,result)})
+    recipesService.updateRecipeOfTheDay(app.get('db'),1,result)
+    if(result.veryPopular){
+      console.log(result,'popular one')
+      recipesService.insertPopularRecipe(app.get('db'),result)
+    }
+  })
+  .catch(error => console.log('error', error));
+});
+
+cron.schedule('0 0 * * *', function() {
+  console.log('running a task every minute for popular ');
+  const requestOptions = {
+    method: 'GET'
+  };
+  fetch("https://api.spoonacular.com/recipes/random?number=10&apiKey=98357eb101bf42e59128466b70bf6fea", requestOptions)
+  .then(response => response.json())
+  .then(results => {
+    results.recipes.forEach(result=>{
+
+      if(result.veryPopular){
+        console.log(result,'popular one')
+        recipesService.insertPopularRecipe(app.get('db'),result)
+      }
+      })
+
+    }) 
   .catch(error => console.log('error', error));
 });
 app.use('/recipes',recipesRouter)
 app.use('/users', usersRouter)
 app.use('/events', eventsRouter )
+var passport = require('passport')
+  , FacebookStrategy = require('passport-facebook').Strategy;
 
+passport.use(new FacebookStrategy({
+    clientID: '178221624097174',
+    clientSecret: '202997af919fa1683855dd25479d3113',
+    callbackURL: "http://www.example.com/auth/facebook/callback"
+  },
+  function(accessToken, refreshToken, profile, done) {
+    // User.findOrCreate(..., function(err, user) {
+    //   if (err) { return done(err); }
+    //   done(null, user);
+    // });
+  }
+));
+// Redirect the user to Facebook for authentication.  When complete,
+// Facebook will redirect the user back to the application at
+//     /auth/facebook/callback
+app.get('/auth/facebook', passport.authenticate('facebook'));
+
+// Facebook will redirect the user to this URL after approval.  Finish the
+// authentication process by attempting to obtain an access token.  If
+// access was granted, the user will be logged in.  Otherwise,
+// authentication has failed.
+app.get('/auth/facebook/callback',
+  passport.authenticate('facebook', { successRedirect: '/',
+                                      failureRedirect: '/login' }));
 app.use(morgan(morganOption))
 app.use(function errorHandler(error, req, res, next) {
          let response

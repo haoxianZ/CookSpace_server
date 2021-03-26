@@ -16,7 +16,9 @@ const UsersService = {
       return knex
         .insert(newFriend)
         .into('friends')
-        .returning('*')
+        .returning('*').then(rows => {return rows[0]})
+      
+
     },
     getById(knex, id) {
       return knex
@@ -62,7 +64,7 @@ const UsersService = {
         })
     },
     getUserFriends(knex,id){
-      return knex('friends').join('users','users.serialid','=','friends.friends').select('friends','email','username').where('friends.user_id',id).distinctOn('friends')
+      return knex('friends').join('users','users.serialid','=','friends.friends').select('friend_id','friends','email','username').where('friends.user_id',id).distinctOn('friends')
     },
     getUserBookmarks(knex,user_id){
       return knex.from('bookmarks').select('*').where('user_id',user_id)
@@ -77,7 +79,7 @@ const UsersService = {
       return knex('bookmarks').where('bookmark_id',id).delete()
   },
   updateBookmarks(knex,id, updateBookmarks){
-      return knex('bookmarks').where('bookmark_id',id).update(updateBookmarks).returning('*').then(rows => {return rows[0]})
+      return knex('bookmarks').where('bookmark_id',id).update(updateBookmarks).returning('friend_id','friends','email','username').then(rows => {return rows[0]})
   },
     getUserIngredients(knex,id){
       return knex.from('ingredients').select('*').where('user_id',id)

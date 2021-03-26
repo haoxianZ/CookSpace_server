@@ -1,8 +1,6 @@
 require('dotenv').config();
 
 const crypto = require('crypto');
-
-
 const path = require('path')
 const express = require('express')
 const xss = require('xss')
@@ -22,23 +20,7 @@ const serializeUser = user =>({
 })
 const nodemailer = require('nodemailer');
 const { user } = require('../config');
-var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy;
 
-  passport.use(new LocalStrategy(
-    function(username, password, done) {
-      User.findOne({ username: username }, function (err, user) {
-        if (err) { return done(err); }
-        if (!user) {
-          return done(null, false, { message: 'Incorrect username.' });
-        }
-        if (!user.validPassword(password)) {
-          return done(null, false, { message: 'Incorrect password.' });
-        }
-        return done(null, user);
-      });
-    }
-  ));
 
 usersRouter.route('/login').post((req, res) =>{
     console.log('being called')
@@ -255,7 +237,18 @@ usersRouter.route('/:user_id/friends').get((req,res,next)=>{
         res.json(friends)
     }).catch(next)
 }).post(jsonParser,(req,res,next)=>{
-    const newFriend = {user_id:req.body.user_id, friends:req.body.friend_id};
+    UsersService.getByUsername(req.app.get('db'),req.body.username).then(
+        user=>{
+            if(!user){
+                return res.status(401).json({
+                    error:{message:'Check you info again, it is case sensitive'}
+                })
+            }
+            return user
+        }
+    ).then(user=>{
+    const friend= serializeUser(user)
+    const newFriend = {user_id:req.body.user_id, friends:friend.serialid};
     for(const [key,value] of Object.entries(newFriend)){
     if(value == null){
         return res.status(400).json({
@@ -264,10 +257,15 @@ usersRouter.route('/:user_id/friends').get((req,res,next)=>{
     };  
     UsersService.insertUserFriend(req.app.get('db'), newFriend)
 .then(friend=>{
-    res.status(201)
-    .json({friend_id:friend})
+    UsersService.getUserFriends(req.app.get('db'),friend.user_id)
+    .then(friends=>{
+        res.json(friends).status(201)
+    })
+    
 }).catch(next)
 }
+    })
+
 })
 usersRouter.route('/:user_id/friends/:friend_id').delete((req,res,next)=>{
     const deleteFriend = req.params.friend_id;
