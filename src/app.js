@@ -52,7 +52,7 @@ app.post('/login', (req, res) =>{
 }
   
 );
-cron.schedule('0 0 * * *', function() {
+cron.schedule('* * * * *', function() {
   console.log('running a task every minute');
   const requestOptions = {
     method: 'GET'
@@ -69,7 +69,7 @@ cron.schedule('0 0 * * *', function() {
   .catch(error => console.log('error', error));
 });
 
-cron.schedule('0 0 * * *', function() {
+cron.schedule('* * * * *', function() {
   console.log('running a task every minute for popular ');
   const requestOptions = {
     method: 'GET'
