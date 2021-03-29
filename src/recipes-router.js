@@ -98,5 +98,17 @@ recipesRouter.route('/:recipe_id')
               .json(recipe)
           }).catch(next)
 })
-
+recipesRouter.route('/:api_id/comment').get((req,res,next)=>{
+    const knexInstance = req.app.get('db')
+    recipesService.getComments(knexInstance,req.params.api_id)
+    .then(comment=>{
+        if (!comment){
+            return res.status(404).json({
+                error:{message: 'comment not exist'}
+            })
+        }
+        console.log(comment)
+        res.status(200).json(comment)
+    }).catch(next)
+})
 module.exports = recipesRouter

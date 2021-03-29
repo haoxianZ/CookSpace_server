@@ -1,9 +1,13 @@
 const recipesService = {
     getAll(knex){
-        return knex.select('*').from('recipes')
+        return knex('recipes').join('users','users.id','=','recipes.user_id').select('user_id','username','api_id','liked','comment','recipes.id')
+
     },
     insertRecipe(knex, newRecipe){
         return knex.insert(newRecipe).into('recipes').returning('*').then(rows => {return rows[0]})
+    },
+    getComments(knex, api_id){
+        return knex('recipes').join('users','users.id','=','recipes.user_id').select('user_id','username','api_id','liked','comment','recipes.id').where('api_id', api_id)
     },
     getById(knex,id){
         return knex.select('*').from('recipes').where('id',id).first()
