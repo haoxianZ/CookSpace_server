@@ -1,6 +1,6 @@
 const UsersService = {
     getAllUsers(knex) {
-      return knex.select('username','email','serialid' ).from('users')
+      return knex.select('username','email','serialid','profile_pic' ).from('users')
     },
   
     insertUser(knex, newUser) {
@@ -64,7 +64,7 @@ const UsersService = {
         })
     },
     getUserFriends(knex,id){
-      return knex('friends').join('users','users.serialid','=','friends.friends').select('friend_id','friends','email','username').where('friends.user_id',id).distinctOn('friends')
+      return knex('friends').join('users','users.serialid','=','friends.friends').select('friend_id','friends','email','username','profile_pic').where('friends.user_id',id).distinctOn('friends')
     },
     getUserBookmarks(knex,user_id){
       return knex.from('bookmarks').select('*').where('user_id',user_id)
