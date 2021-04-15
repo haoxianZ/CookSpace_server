@@ -17,7 +17,7 @@
     "postdeploy": "npm run migrate:production"
   },
   "keywords": [],
-  "author": "",
+  "author": "JohnZhang",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.0.0",
