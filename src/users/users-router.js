@@ -82,12 +82,57 @@ usersRouter.route('/').get(jsonParser,(req,res,next)=>{
                 error:{message:`Missing '${key}' in request body`}
             })
         };
-        newUser = { username:req.body.username, 
+        const token=crypto.randomBytes(3).toString('hex');
+        const salt = await bcrypt.genSalt();
+                const hashedToken = await bcrypt.hash(token,salt);
+                //should not store the code directly, run it through bcrypt
+
+        newUser = { username:req.body.username,
+            verification_token:hashedToken, 
             email:req.body.email, password:hashedPassword, bio:req.body.bio, 
             cooking_level:req.body.cooking_level, profile_pic:req.body.profile_pic };
 
         UsersService.insertUser(req.app.get('db'), newUser)
     .then(user=>{
+        const email =user.email;
+        UsersService.getByEmail(req.app.get('db'),email)
+        .then(async user=>{
+            if(!user){
+                return res.status(404).json({
+                    error:{message:`User doesn't exist`}
+                })
+            }
+            try{
+                console.log(user)
+                const transporter = nodemailer.createTransport({
+                    service:'gmail',
+                    auth:{
+                        user:`${process.env.user}`,
+                        pass:`${process.env.pass}`
+                    }
+                });
+    
+                const mailOptions={
+                    from: `${process.env.user}`,
+                    to: user.email,
+                    subject: 'Verification Code',
+                    text:`Here is the code to verify your email.\n\n`+
+                    `${token}`
+                };
+                transporter.sendMail(mailOptions,(err,resp)=>{
+                    if(err) console.error('there was an error',err)
+                    else{
+                        console.log('response',resp)
+                        res.status(200).json('recovery mail sent');
+                    }
+                })
+                
+                
+                next();
+            }
+            catch{res.status(500).send()}    
+    
+        }).catch(next)
         res.status(201)
         .location(path.posix.join(req.originalUrl,`/${user.id}`))
         .json(serializeUser(user))
@@ -152,6 +197,25 @@ usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
 
     }).catch(next)
 });
+usersRouter.route('/verify').get(jsonParser,(req,res,next)=>{
+    const code =req.query.code;
+    const user_id = req.query.user_id;
+    console.log(code,user_id)
+    UsersService.getById(req.app.get('db'),
+        user_id).then(user=>{
+            if(!user){
+                return res.status(404).json({
+                      error:{message:`User doesn't exist`}
+                })
+            }
+            if(!bcrypt.compareSync(code, user.verification_token)){
+                   return res.status(401).json({
+                        error:{message:`Verification code does not match`}
+                    })
+            }
+            res.status(200).json(serializeUser(user));
+        })
+})
 usersRouter.route('/reset-password').get(jsonParser,(req,res,next)=>{
         const code =req.query.code;
         const user_id = req.query.user_id;
