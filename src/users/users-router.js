@@ -156,16 +156,16 @@ usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
                 error:{message:`User doesn't exist`}
             })
         }
-        const token=crypto.randomBytes(5).toString('hex');
+        const token=crypto.randomBytes(3).toString('hex');
         try{
             console.log(user)
             const salt = await bcrypt.genSalt();
             const hashedToken = await bcrypt.hash(token,salt);
             //should not store the code directly, run it through bcrypt
             const userToUpdate = {resetpasswordtoken:hashedToken}
-            UsersService.updateUser(req.app.get('db'),user.id,userToUpdate)
-            .then(numRowsAffected=>{
-                res.status(204).end()
+            UsersService.updateUser(req.app.get('db'),user.serialid,userToUpdate)
+            .then(user=>{
+                res.status(200).json(user)
             }).catch(next);
             const transporter = nodemailer.createTransport({
                 service:'gmail',
@@ -179,7 +179,7 @@ usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
                 from: `${process.env.user}`,
                 to: user.email,
                 subject: 'Code to reset Password',
-                text:`Here is the Code to reset your password for 'What Should I Make' .\n\n`+
+                text:`Here is the Code to reset your password for your CookSpace account.\n\n`+
                 `${token}`
             };
             transporter.sendMail(mailOptions,(err,resp)=>{
