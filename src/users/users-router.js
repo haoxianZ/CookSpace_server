@@ -223,6 +223,7 @@ usersRouter.route('/reset-password').get(jsonParser,(req,res,next)=>{
         UsersService.getById(req.app.get('db'),
             user_id).then(user=>{
                 if(!user){
+                    console.log(user)
                     return res.status(404).json({
                           error:{message:`User doesn't exist`}
                     })
