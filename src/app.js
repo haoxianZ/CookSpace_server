@@ -14,6 +14,7 @@ const usersRouter = require('./users/users-router')
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy;
 app.use(helmet())
+app.options('*', cors()) // include before other routes
 app.use(cors());
 app.get('/', (req, res) => {
        res.send('Hello, world!')

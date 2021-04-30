@@ -60,8 +60,9 @@ eventsRouter.route('/event/:event_id')
     .then(()=>{
         res.status(204).json({message:'Event deleted'}).end()
     }).catch(next)
-}).patch(jsonParser,(req,res,next)=>{
+}).put(jsonParser,(req,res,next)=>{
     const {event_date, host_id, event_recipe_id,event_name} = req.body
+    console.log(req.body)
     const eventToUpdate = {event_date, host_id, event_recipe_id,event_name}
     const numberOfValues = Object.values(eventToUpdate).filter(Boolean).length
       if (numberOfValues === 0) {
