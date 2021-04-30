@@ -56,7 +56,7 @@ const UsersService = {
   },
     updateUser(knex, id, newUserFields) {
       return knex('users')
-        .where('serialid',id)
+        .where('id',id)
         .update(newUserFields)
         .returning('*')
         .then(rows => {

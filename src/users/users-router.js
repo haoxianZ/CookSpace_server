@@ -68,8 +68,15 @@ usersRouter.route('/').get(jsonParser,(req,res,next)=>{
     else res.status(404).json({
         error:{message:`User doesn't exist`}
     })
-}).post(jsonParser,async (req,res,next)=>{
-    try{
+}).post(jsonParser, (req,res,next)=>{
+        UsersService.getByEmail(req.app.get('db') ,req.body.email).then(async user=>{
+        if(user){
+            return res.status(405).json({
+            error:{message:`You have signed up with this email`}
+        })
+        }
+            try{
+
         const salt = await bcrypt.genSalt();
         const hashedPassword = await bcrypt.hash(req.body.password,salt);
         console.log(salt, hashedPassword)
@@ -139,10 +146,13 @@ usersRouter.route('/').get(jsonParser,(req,res,next)=>{
     }).catch(next)
     }
     }
-catch{res.status(500).send()}    
+catch{res.status(500).send()}  
+
+        })
+  
 })
 
-usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
+usersRouter.route('/forget-password').put(jsonParser,(req,res,next)=>{
     const email =req.body.email;
     if(!email){
         return res.status(400).json({
@@ -163,7 +173,7 @@ usersRouter.route('/forget-password').patch(jsonParser,(req,res,next)=>{
             const hashedToken = await bcrypt.hash(token,salt);
             //should not store the code directly, run it through bcrypt
             const userToUpdate = {resetpasswordtoken:hashedToken}
-            UsersService.updateUser(req.app.get('db'),user.serialid,userToUpdate)
+            UsersService.updateUser(req.app.get('db'),user.id,userToUpdate)
             .then(user=>{
                 res.status(200).json(user)
             }).catch(next);
@@ -235,7 +245,7 @@ usersRouter.route('/reset-password').get(jsonParser,(req,res,next)=>{
                 }
                 res.status(200).json(serializeUser(user));
             })
-}).patch(jsonParser,async (req,res,next)=>{
+}).put(jsonParser,async (req,res,next)=>{
     try{
         const user_id=req.body.user_id;
         const salt = await bcrypt.genSalt();

@@ -28,7 +28,7 @@ const { json } = require('body-parser');
 const eventsRouter = require('./events-router');
 
 app.use(express.static("public"));
-app.use(session({ secret: "thinkfulProject" }));
+// app.use(session({ secret: "thinkfulProject" }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
 app.use(passport.session());
